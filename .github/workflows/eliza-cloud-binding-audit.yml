@@ -31,10 +31,10 @@ jobs:
           }
           scripts="$(cf_get 'scripts?per_page=100')"
           printf '%s\n' "$scripts" | jq -c '[.[] | select(.id | startswith("eliza-cloud")) | {id, modified_on}]'
-          for worker in eliza-cloud-api-production eliza-cloud-api-staging; do
+          for worker in eliza-cloud-api-prod eliza-cloud-api-staging; do
             printf 'Worker %s\n' "$worker"
             if settings="$(cf_get "scripts/$worker/settings")"; then
-              jq -c '{bindings: [ .bindings[] | {name,type} ] | sort_by(.type,.name)}' <<< "$settings"
+              jq -c '{bindingTypes: ([.bindings[].type] | group_by(.) | map({type:.[0],count:length})), v4Bindings:[.bindings[] | select(.name | test("^(CLOUD_PROFILE|CLOUD_ENVIRONMENT|CLOUD_IDENTITY_DIGEST|PUBLIC_API_ORIGIN|WEB_ORIGIN|NATIVE_CLIENT_REGISTRY|ASSETS|HYPERDRIVE)$")) | {name,type}]}' <<< "$settings"
               cf_get "scripts/$worker/deployments" | jq -c '.deployments[0] | {id,created_on,versions:[.versions[]|{version_id,percentage}]}'
             fi
           done
