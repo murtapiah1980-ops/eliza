@@ -1,0 +1,40 @@
+name: Eliza Cloud binding audit
+on:
+  push:
+    branches: [codex/eliza-cloud-binding-audit]
+permissions: {}
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Read Worker deployment and binding names
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$CLOUDFLARE_API_TOKEN" && -n "$CLOUDFLARE_ACCOUNT_ID" ]]
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers"
+          cf_get() {
+            local path="$1"
+            local output
+            if ! output="$(curl --silent --show-error --max-time 15 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$api/$path")"; then
+              return 1
+            fi
+            if ! jq -e '.success == true' >/dev/null <<< "$output"; then
+              jq -c '{errors: [.errors[].code]}' >&2 <<< "$output"
+              return 1
+            fi
+            jq -c '.result' <<< "$output"
+          }
+          scripts="$(cf_get 'scripts?per_page=100')"
+          printf '%s\n' "$scripts" | jq -c '[.[] | select(.id | startswith("eliza-cloud")) | {id, modified_on}]'
+          for worker in eliza-cloud-api-production eliza-cloud-api-staging; do
+            printf 'Worker %s\n' "$worker"
+            if settings="$(cf_get "scripts/$worker/settings")"; then
+              jq -c '{bindings: [ .bindings[] | {name,type} ] | sort_by(.type,.name)}' <<< "$settings"
+              cf_get "scripts/$worker/deployments" | jq -c '.deployments[0] | {id,created_on,versions:[.versions[]|{version_id,percentage}]}'
+            fi
+          done
