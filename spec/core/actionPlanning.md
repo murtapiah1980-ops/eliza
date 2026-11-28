@@ -1,6 +1,6 @@
 # Action planning and tool calls
 
-The compatibility baseline is `elizaOS/eliza@72fed7e4069ecd35d61d886ab6eec5c02c137517`. Sources are `packages/core/src/actions.ts`, `actions/action-schema.ts`, `actions/to-tool.ts`, `actions/validate-tool-args.ts`, `actions/validation.ts`, `actions/resolve-action-args.ts`, `actions/subaction-dispatch.ts`, `actions/promote-subactions.ts`, and `packages/core/src/runtime/execute-planned-tool-call.ts`, `planner-types.ts`, `tool-arg-aliases.ts`, `action-gate.ts` and `action-role-policy.ts`. The planner proposes tool calls; this machine decides which of them run. How a running handler's result and callbacks settle is [action settlement](./execution.md), and the receipts its callbacks bind are [action receipts](./actionReceipts.md).
+The compatibility baseline is `elizaOS/eliza@72fed7e4069ecd35d61d886ab6eec5c02c137517`. Sources are `packages/core/src/actions.vibe`, `packages/core/src/actions/action-schema.vibe`, `packages/core/src/actions/to-tool.vibe`, `packages/core/src/actions/validate-tool-args.vibe`, `packages/core/src/actions/validation.vibe`, `packages/core/src/actions/resolve-action-args.vibe`, `packages/core/src/actions/subaction-dispatch.vibe`, `packages/core/src/actions/promote-subactions.vibe`, and `packages/core/src/runtime/execute-planned-tool-call.vibe`, `packages/core/src/runtime/planner-types.vibe`, `packages/core/src/runtime/tool-arg-aliases.vibe`, `packages/core/src/runtime/action-gate.vibe` and `packages/core/src/runtime/action-role-policy.vibe`. The planner proposes tool calls; this machine decides which of them run. How a running handler's result and callbacks settle is [action settlement](./execution.md), and the receipts its callbacks bind are [action receipts](./actionReceipts.md).
 
 ## Story: Plan and execute tool calls
 
@@ -32,7 +32,7 @@ pure def alwaysActionNamesUnique(s: Planning): bool = s.registry.every(d => d.na
 
 ### Only a registered action with valid arguments and a permitted role is invoked
 
-A planned call carries the caller's resolved gate role, one of Guest, User, Admin and Owner (`packages/core/src/runtime/action-gate.ts`): the agent's own message resolves to Owner, a sender with no stored role to Guest, and a failed role lookup plans no call. A planned call is validated before anything runs. An unknown action, a caller below the action's role, or arguments that fail the action's parameter schema reject the call with that reason. A rejected call never invokes a handler.
+A planned call carries the caller's resolved gate role, one of Guest, User, Admin and Owner (`packages/core/src/runtime/action-gate.vibe`): the agent's own message resolves to Owner, a sender with no stored role to Guest, and a failed role lookup plans no call. A planned call is validated before anything runs. An unknown action, a caller below the action's role, or arguments that fail the action's parameter schema reject the call with that reason. A rejected call never invokes a handler.
 
 ```quint
 pure val idValues = Set(1, 2, 3)
